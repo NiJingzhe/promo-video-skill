@@ -1,57 +1,81 @@
 # promo-video
 
-A Claude Code skill that makes a beat-synced product promo film end to end, with a human in the loop: pick music (Epidemic Sound "Create a cut") → design the storyboard → voice-over script for ElevenLabs → cut the take → build in Remotion (three.js metal renders, product-UI replicas, camera moves, every cut on the beat) → review the render in the browser.
-
-Browser tools included: a waveform page for cutting the voice-over by clicking between the script's lines, and a review page (monitor + timeline strip, notes attached to exact frames).
+A Claude Code skill that makes a **beat-synced product promo film** end to end, with a human in the loop. Music → storyboard → voice-over script → cut the take → build in Remotion → review the render in the browser. Every cut lands on the music's beat; everything shown is real (your meshes, your code, your UI rebuilt from the frontend).
 
 ```bash
 npx skills add NiJingzhe/promo-video-skill
 ```
 
-Needs `ffmpeg`, `node` 20+ and [`uv`](https://docs.astral.sh/uv/). Chinese guide below.
+Needs `ffmpeg`, `node` 20+ and [`uv`](https://docs.astral.sh/uv/). Then tell Claude: **"Use promo-video to make a ~40 s promo for \<product\>."** (中文说明见下方。)
 
 ---
 
-# promo-video · 做一支踩点的产品宣传片
+## SOP · 标准流程
 
-> 一个 Claude Code skill：你和 Claude 一起，从选音乐开始，到出片。画面的每一次切换都踩在音乐的拍点上，旁白和画面严丝合缝。
+> 原则：**人只做判断，机器做体力活。** 每个阶段以一个人能直接看见、听见、点一下的东西收尾，不让你读技术细节。
+> Principle: the human only judges; every stage ends in something you can see, hear or click.
 
-## 你会得到什么
+| # | 阶段 Stage | 你 You | Claude | 产物 Output |
+|---|---|---|---|---|
+| 1 | **音乐 Music** | 在 [Epidemic Sound](https://www.epidemicsound.com) 选曲，点曲目上的小剪刀 **Create a cut**，得到指定时长、有完整收尾的版本（无版权，可商用） | 分析曲子：真实 BPM、拍点、小节线、drop / 停顿 / 渐强 | `audio/track.wav`、`beats.json` |
+| 2 | **分镜 Storyboard** | 回答几个问题（产品、受众、感觉、必须出现什么），看分镜表，点头或改 | 写 `PLAN.md`：每个镜头几点几秒、画面、踩哪一拍 | `PLAN.md` |
+| 3 | **旁白 Voice-over** | 去 [ElevenLabs](https://elevenlabs.io) 选声音，把 Claude 给的**整段带 `<break>` 的脚本一次生成**，把 mp3 给 Claude | 写旁白、整理成 `elevenlabs.md` | `vo/take.mp3` |
+| 4 | **切分 Cut** | 在浏览器页面里**听一遍，每句结束点一下**（下图） | 按你的切点切成一句一句、统一响度、排到画面上 | `vo/vo_NN.wav`、`clips.json` |
+| 5 | **制作 Build** | 看关键帧截图和草稿 | 用 Remotion + three.js：写实金属、产品 UI 复刻、推拉摇移，所有事件对齐拍点 | `out/promo.mp4` |
+| 6 | **审片 Review** | 在审片页里边看边留备注，选“通过 / 需要修改”（下图） | 逐条看备注和对应画面，修好重渲，再请你审，直到通过 | `review/review.json` |
 
-- 一支 30–60 秒、1080p60 的宣传片（H.264 mp4）
-- 配套文件：分镜文档 `PLAN.md`、给 ElevenLabs 的带标记旁白脚本 `elevenlabs.md`、切好的旁白、整个 Remotion 工程（可以随时改、重渲）
+**可选**：装了 `ego-browser` / Playwright 之类的浏览器自动化工具时，Claude 会**征求你同意**后替你在 Epidemic Sound 找曲下载、在 ElevenLabs 生成旁白。需要你**自己有账号**（它们不代注册）；ElevenLabs 按字符计费、重新生成会重复计费，Claude 会先说明预估花费；**登录、验证码、付款永远由你完成**；曲子和声音由你选。
 
-## 你要做的只有这几件事（其余交给 Claude）
+### 阶段 4 · 切旁白：点一下，切这里
 
-| 步骤 | 你 | Claude |
-|---|---|---|
-| **1. 选音乐** | 在 [Epidemic Sound](https://www.epidemicsound.com) 选一首曲子（无版权，可商用）。点曲目上的 **小剪刀图标 → “Create a cut”**，它会从原曲里剪出一个**流畅、自然收尾的指定时长版本**（比如 45 秒）。下载 wav/mp3 给 Claude。 | 分析曲子：真实 BPM、拍点、小节线、哪里是 drop / 停顿 / 渐强 |
-| **2. 设计分镜** | 回答 Claude 的几个问题（产品是什么、要给谁看、想要什么感觉、必须出现什么）。看一眼分镜表，点头或改。 | 写 `PLAN.md`：每个镜头几点几秒、画面是什么、踩哪一拍 |
-| **3. 旁白** | 去 [ElevenLabs](https://elevenlabs.io) 选一个合适的声音，把 Claude 给你的整段脚本（带 `<break>` 标记）**一次**生成完。把音频发给 Claude。 | 写旁白（如果需要）和 ElevenLabs 脚本 |
-| **3b. 切分旁白** | Claude 会弹出一个浏览器页面：右边是**旁白脚本逐句列出**，中间是整段录音的波形（有声与停顿分开显示）。按空格播放，**每听到一句结束，就在停顿处点一下（或按 C）**切一刀；当前听到的是哪一句会高亮。可缩放、撤销重做。点 **Done**，页面自己关闭。 | 读取你的切分结果，切成一句一句，调到同样的响度，排到画面上 |
-| **4. 看初稿** | 看 Claude 发来的关键帧截图和草稿，提意见（“这里慢一点”“这个太假”）。 | 用 Remotion + three.js 制作：写实金属渲染、产品界面复刻、镜头推拉摇移 |
-| **5. 审片** | Claude 弹出审片页：上方是监视器，下方是时间线条（画面缩略图 + 成片音频波形 + 节拍/旁白标注）。边看边按 **M** 在当前画面上留一条备注（拖一段可标范围），最后选“通过”或“需要修改”。每条备注都自带当时那一帧。 | 看每条备注和对应画面，修好、重渲、再请你审，直到通过 |
+右边是脚本逐句列出，中间是整段录音。有声与**停顿（break）**分开显示；当前听到的是哪一句会高亮。按空格播放，**每听到一句结束，在停顿里点一下（或按 C）**，不用精确，停顿里任何位置都行，语音会自动修边。
 
-- 需要的话，同一个编辑器也能在音乐波形上**标记 drop / 停顿 / 渐强**等关键点（会吸附到节拍网格）。
+![cut the voice-over](docs/img/cut-voiceover.png)
 
-## 让 Claude 帮你操作网站（可选）
+```bash
+uv run scripts/cut_ui.py vo/take.mp3 --mode cuts --script elevenlabs.md --out vo/cuts.json
+uv run scripts/vo_cut.py vo/take.mp3 --regions vo/cuts.json --out vo/
+```
 
-如果装了 `ego-browser`、Playwright 之类的浏览器自动化工具，Claude 会**先征求你同意**，再替你在 Epidemic Sound 找曲、点 “Create a cut” 下载，在 ElevenLabs 粘贴脚本、生成并下载旁白。需要知道的：
+### 阶段 1 · 标记音乐关键点（可选）
 
-- **要有账号**：Epidemic Sound 需订阅（有试用）；ElevenLabs 有免费额度。账号你自己注册，Claude 不代注册。
-- **可能产生费用**：ElevenLabs 按字符计费，一支片子约六七百到一千字符，重新生成会重复计费；Claude 会先告诉你预估花费，等你同意。
-- **登录和付款永远由你来**：需要登录、验证码、付款时，浏览器交还给你，完成后再继续；Claude 不输入你的密码和银行卡。
-- **选择权在你**：曲子和声音由你定，Claude 只负责筛出几个候选。
+分析器的判断拿不准，或者你想亲手定 drop / stab / re-push，就用同一个页面标音乐：节拍格画在波形上，点一下就落下一个带名字的标记，并**吸附到节拍**。
 
-## 小贴士
+![mark the music](docs/img/mark-music.png)
 
-- **音乐先行**。画面都是按音乐定的，换曲子等于重做。选定之后再往下走。
-- **“Create a cut”比自己剪好**：它理解曲子的结构，剪出来的版本有完整的开头和结尾，不会在半拍里被切断。需要更短的版本时，让 Claude 用工具剪（它会对齐小节线并交叉淡化，并验证接缝）。
-- **真实 > 好看**：画面里的模型、代码、界面都用你产品里真实的东西。给 Claude 一个仓库路径就行。
-- **旁白不必每句都用**。想压缩时长，Claude 会挑关键几句，其余让音乐说话。
+```bash
+uv run scripts/cut_ui.py audio/track.wav --mode marks --beats audio/beats.json --labels stab,drop,re-push --out audio/marks.json
+```
 
-## 开始
+### 阶段 6 · 审片：画面上直接留备注
 
-对 Claude 说：**“用 promo-video 给 <产品名> 做个宣传片，大概 40 秒。”**
+上方监视器，下方时间线条：**画面缩略图 + 成片音频波形**（音频已混在成片里，所以只有一条）+ 可选的**节拍 / 音乐标记 / 旁白**标注，卡点对不对一眼可见。按 **M** 在当前画面上留一条备注，**每条备注自带当时那一帧**；在红色 Notes 轨上拖一段就是范围备注。完成时选“通过”或“需要修改”。
 
-Claude 会先问你音乐，再往下走。目录结构、脚本和技术细节见 [SKILL.md](SKILL.md) 与 `references/`。
+![review the render](docs/img/review.png)
+
+```bash
+uv run scripts/review_ui.py out/promo.mp4 --out review/review.json --overlay review/overlay.json
+```
+
+快捷键：`Space` 播放 · `←/→` 逐帧 · `Shift+←/→` 一秒 · `M` 备注 · `Del` 删除 · `⌘/Ctrl+Z` 撤销 · `⌘/Ctrl+滚轮` 缩放。
+
+---
+
+## What is in the box
+
+| Path | |
+|---|---|
+| `SKILL.md` | the workflow Claude follows (six stages, ground rules, browser-automation etiquette) |
+| `references/` | one guide per stage: music, storyboard, voice-over, build, review |
+| `scripts/music_analyze.py` | true BPM (fitted, not guessed), beat/bar grid, sections, the drop |
+| `scripts/music_splice.py` | shorten a track with a bar-aligned, crossfaded jump; verifies the join |
+| `scripts/cut_ui.py` | browser page: cut a voice-over take by clicking between its lines / mark music on the beat grid |
+| `scripts/vo_cut.py` | split the take into levelled (-15 LUFS) clips + `clips.json` |
+| `scripts/review_ui.py` | browser review page: monitor + timeline strip, notes with exact frames |
+| `scripts/new_project.sh` + `template/` | Remotion project: metal studio (three.js), beat clock, VO mix, virtual camera for UI flights, CAD mesh tools |
+
+The browser pages are single-file, dependency-free Python servers on `127.0.0.1`: the agent starts one in the background, the human works in the tab, presses **Done**, the tab closes itself and the agent receives a JSON file.
+
+## License
+
+MIT

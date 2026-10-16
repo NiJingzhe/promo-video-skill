@@ -108,7 +108,7 @@ aside{width:340px;border-left:1px solid var(--line);overflow:auto;padding:10px}
 aside h2{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin:2px 4px 8px;display:flex;justify-content:space-between}
 .row{display:grid;grid-template-columns:26px 1fr;gap:2px 8px;padding:8px;border:1px solid var(--line);border-radius:6px;margin-bottom:6px;background:var(--panel);cursor:pointer}
 .row.now{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}.row .n{color:var(--acc);font-weight:700;grid-row:1/3}
-.row .t{line-height:1.35}.row small{color:var(--dim)}.row.miss{opacity:.55}.row.ok small::before{content:"✓ ";color:#58d68d}
+.row .t{line-height:1.35}.row small{color:var(--dim)}.row small a{color:var(--dim)}.row.miss{opacity:.55}.row.ok small::before{content:"✓ ";color:#58d68d}
 .row input{background:#101216;color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:3px 5px;width:100%;font:inherit}
 footer{padding:8px 14px;border-top:1px solid var(--line);color:var(--dim);display:flex;justify-content:space-between;font-size:12px;gap:12px;flex-wrap:wrap}
 #msg{position:fixed;inset:0;background:#000c;display:none;align-items:center;justify-content:center;font-size:18px}
