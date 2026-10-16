@@ -1,0 +1,2 @@
+{"name":"promo","private":true,"type":"module","scripts":{"studio":"remotion studio src/index.ts","still":"remotion still src/index.ts Promo out/still.png --frame=120","render":"remotion render src/index.ts Promo out/promo.mp4"},
+"dependencies":{"@react-three/fiber":"^9.8.2","@remotion/bundler":"^4.0.535","@remotion/cli":"^4.0.535","@remotion/renderer":"^4.0.535","@remotion/three":"^4.0.535","@types/react":"^19","@types/three":"^0.186.0","react":"^19.3.1","react-dom":"^19.3.1","remotion":"^4.0.535","three":"^0.186.1","typescript":"^5.6.0"}}
